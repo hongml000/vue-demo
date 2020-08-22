@@ -1,4 +1,3 @@
-
 const path = require('path')
 const VueLoaderPlugin = require('vue-loader/lib/plugin')
 const HttpWebpackPlugin = require('html-webpack-plugin')
@@ -21,21 +20,36 @@ const config= {
   module: {
     rules: [
       {
-        test: /.vue$/,  // test是一个正则，用来匹配哪些文件要处理的
+        test: /\.vue$/,  // test是一个正则，用来匹配哪些文件要处理的
         loader: "vue-loader" // loader是说明用哪些模块来处理
+      },
+      {
+        test: /\.jsx$/,
+        loader:"babel-loader"
       },
       // 注意，style-loader和css-loader位置不能写反，否则报CssSyntaxError错误
       {
-        test: /.css$/,
+        test: /\.css$/,
         use: ["style-loader", "css-loader"]
       },
       {
         // 注意这里不能写.style，否则会检测到.css文件
-        test: /.styl$/,
-        use: ['style-loader', 'css-loader', 'stylus-loader']
+        test: /\.styl$/,
+        // 使用stylus-loader会生成一个sourceMap，而postcss-loader也会生成一个sourceMap，将sourceMap设为true，会自动延用已经解析出来的sourceMap
+        use: [
+          'style-loader', 
+          'css-loader', 
+          { 
+            loader: "postcss-loader", 
+            options:{
+              sourceMap: true
+            }
+          },
+          'stylus-loader'
+        ]
       },
       {
-        test: /.(jpg|gif|jpeg|png|svg)/,
+        test: /\.(jpg|gif|jpeg|png|svg)/,
         // 当需要对引用的loader做进一步配置时，需要使用use列表，在options里添加对应配置
         use: [
           // url-loader可以将图片转换成base代码，limit判断当文件大小小于1024时，就会将图片转换成base64
@@ -74,6 +88,12 @@ if(env === "development") {
       erorrs: true    // 将错误显示在页面上
     },
     open: true, //启动时自动打开浏览器
+    hot: true   // 热模块加载，即修改数据时，只渲染修改的部分，从不会重新刷新整个页面，如果没有这个属性，修改数据时，就会刷新整个页面
    }
+   //  hot属性一般还会配合两个插件以便提供更高阶的用法
+  config.plugins.push(
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.NoEmitOnErrorsPlugin()
+  )
 }
 module.exports = config
